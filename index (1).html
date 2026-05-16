@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Gestión de Alumnos</title>
+
+  <!-- =====================================================
+       FUENTES GOOGLE FONTS
+       - "Syne" para títulos: moderna y técnica
+       - "DM Sans" para texto: limpia y legible
+       ===================================================== -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* =====================================================
+       VARIABLES GLOBALES DE DISEÑO
+       Aquí definimos colores y tamaños reutilizables.
+       Cambiar un valor acá afecta a toda la app.
+       ===================================================== */
+    :root {
+      --bg:        #0d0f14;        /* Fondo principal oscuro */
+      --surface:   #161921;        /* Fondo de tarjetas */
+      --surface2:  #1e2130;        /* Fondo de inputs */
+      --border:    #2a2f45;        /* Color de bordes */
+      --accent:    #4f8ef7;        /* Azul principal */
+      --accent2:   #7c3aed;        /* Violeta secundario */
+      --green:     #22c55e;        /* Verde éxito */
+      --red:       #ef4444;        /* Rojo error */
+      --yellow:    #f59e0b;        /* Amarillo advertencia */
+      --text:      #e8eaf0;        /* Texto principal */
+      --muted:     #6b7280;        /* Texto secundario */
+      --radius:    12px;           /* Bordes redondeados */
+      --shadow:    0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    /* =====================================================
+       RESET Y BASE
+       Eliminamos márgenes por defecto del navegador
+       y aplicamos el box-model correcto.
+       ===================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* =====================================================
+       NAVEGACIÓN SUPERIOR
+       Barra fija que siempre se ve al hacer scroll.
+       ===================================================== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    /* Botones de navegación entre páginas */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .nav-tab {
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-tab:hover { color: var(--text); background: var(--surface2); }
+
+    /* La pestaña activa tiene color de acento */
+    .nav-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* =====================================================
+       PÁGINAS / VISTAS
+       Solo se muestra una página a la vez.
+       La clase "active" la hace visible.
+       ===================================================== */
+    .page {
+      display: none;
+      padding: 88px 2rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .page.active { display: block; }
+
+    /* =====================================================
+       ENCABEZADOS DE SECCIÓN
+       ===================================================== */
+    .page-header {
+      margin-bottom: 2rem;
+    }
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+    .page-subtitle {
+      color: var(--muted);
+      margin-top: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    /* =====================================================
+       TARJETAS (CARDS)
+       Contenedores con fondo oscuro y borde sutil.
+       ===================================================== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* Títulos dentro de las tarjetas */
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* =====================================================
+       GRILLAS (GRID)
+       Usamos CSS Grid para organizar el formulario
+       en columnas que se adaptan a diferentes pantallas.
+       ===================================================== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+    /* En pantallas pequeñas, una sola columna */
+    @media (max-width: 700px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .col-span-2 { grid-column: span 2; }
+    @media (max-width: 700px) { .col-span-2 { grid-column: span 1; } }
+
+    /* Separación vertical entre secciones del formulario */
+    .form-section { margin-bottom: 1.5rem; }
+
+    /* =====================================================
+       GRUPOS DE FORMULARIO
+       Cada campo tiene una etiqueta arriba y el input abajo.
+       ===================================================== */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Estilos compartidos para inputs, selects y textareas */
+    input, select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    /* Al hacer foco en un campo, resaltamos su borde */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,142,247,0.15);
+    }
+
+    select option { background: var(--surface2); }
+
+    /* =====================================================
+       SECCIÓN DE INTERESES (CHECKBOXES)
+       Grid de 4 columnas para mostrar los 20 intereses.
+       ===================================================== */
+    .intereses-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 700px) {
+      .intereses-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Cada checkbox con etiqueta */
+    .interes-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.85rem;
+    }
+
+    .interes-item:hover { border-color: var(--accent); }
+
+    /* Cuando el checkbox está marcado, resaltamos todo el item */
+    .interes-item:has(input:checked) {
+      background: rgba(79,142,247,0.12);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .interes-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* =====================================================
+       BOTONES
+       ===================================================== */
+    .btn {
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #3a78e8; transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger {
+      background: var(--red);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #dc2626; }
+
+    .btn-success {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.82rem; }
+
+    /* =====================================================
+       NOTIFICACIONES (TOAST)
+       Mensajes flotantes que aparecen y desaparecen.
+       ===================================================== */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 0.9rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 340px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { background: var(--green); color: #fff; }
+    #toast.error   { background: var(--red);   color: #fff; }
+
+    /* =====================================================
+       TABLA DE RESULTADOS (PÁGINA CONSULTAS)
+       ===================================================== */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-top: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th {
+      background: var(--surface2);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(79,142,247,0.05); }
+
+    /* =====================================================
+       BADGES (ETIQUETAS DE INTERESES)
+       Pequeñas pastillas de color para mostrar intereses.
+       ===================================================== */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin: 0.1rem;
+      background: rgba(79,142,247,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(79,142,247,0.3);
+    }
+
+    /* =====================================================
+       ESTADÍSTICAS (CARDS PEQUEÑOS)
+       Muestran conteos rápidos en el dashboard.
+       ===================================================== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* =====================================================
+       MENSAJE CUANDO NO HAY RESULTADOS
+       ===================================================== */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+    }
+    .empty-state svg { margin-bottom: 1rem; opacity: 0.4; }
+    .empty-state p { font-size: 1rem; }
+
+    /* =====================================================
+       MODAL (VENTANA EMERGENTE)
+       Para ver detalles de un alumno o confirmar acciones.
+       ===================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .modal-close {
+      background: var(--surface2);
+      border: none;
+      color: var(--muted);
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* Filas de detalle en el modal */
+    .detail-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      min-width: 140px;
+    }
+    .detail-val { font-weight: 500; }
+
+    /* =====================================================
+       FILTROS (PÁGINA CONSULTAS)
+       ===================================================== */
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 700px) { .filters-grid { grid-template-columns: 1fr; } }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    /* Indicador de cuántos resultados se encontraron */
+    .results-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .results-count {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .results-count strong { color: var(--accent); }
+
+    /* Botón de exportar */
+    .export-btn {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    /* =====================================================
+       SUGERENCIAS (SECCIÓN INFERIOR)
+       ===================================================== */
+    .suggestions {
+      margin-top: 2rem;
+    }
+    .suggestion-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
+    .suggestion-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .suggestion-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .suggestion-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* =====================================================
+       SCROLL Y MISCELÁNEOS
+       ===================================================== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .flex  { display: flex; }
+    .gap-2 { gap: 0.75rem; }
+    .wrap  { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+  </style>
+</head>
+<body>
+
+<!-- =====================================================
+     BARRA DE NAVEGACIÓN
+     Permite cambiar entre la página de Registro y Consultas.
+     ===================================================== -->
+<nav>
+  <div class="nav-brand">🎓 GestorAlumnos</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('registro')">📝 Registro</button>
+    <button class="nav-tab" onclick="showPage('consultas')">🔍 Consultas</button>
+  </div>
+</nav>
+
+<!-- =======================================================
+     PÁGINA 1: REGISTRO DE ALUMNOS
+     Formulario para agregar un nuevo alumno a la base de datos.
+     ======================================================= -->
+<div class="page active" id="page-registro">
+
+  <div class="page-header">
+    <h1 class="page-title">Registro de Alumno</h1>
+    <p class="page-subtitle">Completá todos los campos para registrar un nuevo alumno.</p>
+  </div>
+
+  <!-- Estadísticas rápidas -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card">
+      <div class="stat-number" id="stat-total">0</div>
+      <div class="stat-label">Alumnos Registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="stat-escuelas">0</div>
+      <div class="stat-label">Escuelas Distintas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="stat-especialidades">0</div>
+      <div class="stat-label">Especialidades</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="stat-intereses">0</div>
+      <div class="stat-label">Intereses Únicos</div>
+    </div>
+  </div>
+
+  <!-- ---- Formulario de Registro ---- -->
+  <div class="card">
+    <div class="card-title">👤 Datos Personales</div>
+
+    <!-- DATOS PERSONALES -->
+    <div class="form-section">
+      <div class="grid-3">
+        <div class="form-group">
+          <label for="apellido">Apellido *</label>
+          <input type="text" id="apellido" placeholder="Ej: García" />
+        </div>
+        <div class="form-group">
+          <label for="nombre">Nombre *</label>
+          <input type="text" id="nombre" placeholder="Ej: Lucía" />
+        </div>
+        <div class="form-group">
+          <label for="fechaNac">Fecha de Nacimiento *</label>
+          <!-- max se setea con JS para que no sea mayor al día de hoy -->
+          <input type="date" id="fechaNac" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card-title">🏠 Domicilio</div>
+
+    <!-- DOMICILIO -->
+    <div class="form-section">
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="calle">Calle *</label>
+          <input type="text" id="calle" placeholder="Ej: Av. San Martín" />
+        </div>
+        <div class="form-group">
+          <label for="numero">Número *</label>
+          <input type="number" id="numero" placeholder="Ej: 1234" min="1" />
+        </div>
+        <div class="form-group">
+          <label for="telCelular">Teléfono Celular</label>
+          <input type="tel" id="telCelular" placeholder="Ej: 011-1234-5678" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card-title">🏫 Datos Educativos</div>
+
+    <!-- DATOS EDUCATIVOS -->
+    <div class="form-section">
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="escuela">Nombre de la Escuela *</label>
+          <input type="text" id="escuela" placeholder="Ej: ENET N°1" />
+        </div>
+        <div class="form-group">
+          <label for="especialidad">Especialidad de la Escuela *</label>
+          <!-- Opciones de especialidades comunes en escuelas técnicas y secundarias -->
+          <select id="especialidad">
+            <option value="">— Seleccionar especialidad —</option>
+            <option value="Informática">Informática</option>
+            <option value="Electrónica">Electrónica</option>
+            <option value="Electricidad">Electricidad</option>
+            <option value="Mecánica">Mecánica</option>
+            <option value="Construcciones">Construcciones</option>
+            <option value="Administración">Administración</option>
+            <option value="Contabilidad">Contabilidad</option>
+            <option value="Química">Química Industrial</option>
+            <option value="Maestro Mayor Obras">Maestro Mayor de Obras</option>
+            <option value="Diseño">Diseño Gráfico</option>
+            <option value="Agrotécnica">Agrotécnica</option>
+            <option value="Turismo">Turismo</option>
+            <option value="Salud">Salud y Enfermería</option>
+            <option value="Comunicación">Comunicación</option>
+            <option value="Arte">Arte y Expresión</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         SECCIÓN DE INTERESES
+         Se muestran 20 opciones como checkboxes.
+         El alumno puede marcar todos los que quiera.
+         ===================================================== -->
+    <div class="card-title">💡 Intereses del Alumno</div>
+    <p style="color:var(--muted); font-size:0.85rem; margin-bottom:1rem;">
+      Marcá todos los temas que te interesen (podés elegir más de uno).
+    </p>
+    <div class="form-section">
+      <div class="intereses-grid" id="intereses-grid">
+        <!-- Los intereses se generan desde JavaScript -->
+      </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="flex gap-2 wrap mt-2">
+      <button class="btn btn-primary" onclick="guardarAlumno()">
+        💾 Guardar Alumno
+      </button>
+      <button class="btn btn-secondary" onclick="limpiarFormulario()">
+        🗑️ Limpiar Formulario
+      </button>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       ÚLTIMOS ALUMNOS REGISTRADOS
+       Muestra los últimos 5 alumnos en una tabla pequeña.
+       ===================================================== -->
+  <div class="card mt-2">
+    <div class="card-title">🕐 Últimos Alumnos Registrados</div>
+    <div id="ultimos-alumnos">
+      <div class="empty-state">
+        <p>Aún no hay alumnos registrados.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       SUGERENCIAS DE MEJORA
+       ===================================================== -->
+  <div class="suggestions">
+    <div class="card-title" style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:1rem;">
+      🚀 Sugerencias para Mejorar el Programa
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">🔐</div>
+      <div>
+        <div class="suggestion-title">Sistema de Login con Roles</div>
+        <div class="suggestion-desc">
+          Agregar un módulo de autenticación con roles: <strong>Administrador</strong> (puede borrar y editar todo),
+          <strong>Docente</strong> (puede ver y agregar), <strong>Alumno</strong> (solo puede ver sus propios datos).
+          Usaría una base de datos real como Firebase o Supabase.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">📊</div>
+      <div>
+        <div class="suggestion-title">Dashboard con Gráficos</div>
+        <div class="suggestion-desc">
+          Añadir una página de estadísticas con gráficos de torta y barras (usando Chart.js o D3.js)
+          que muestren: distribución de intereses, alumnos por escuela, edades promedio, etc.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">📤</div>
+      <div>
+        <div class="suggestion-title">Exportar a Excel / PDF</div>
+        <div class="suggestion-desc">
+          Implementar un botón que descargue los resultados de las consultas en formato Excel (.xlsx)
+          usando la librería SheetJS, o generar reportes en PDF con jsPDF.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">🌐</div>
+      <div>
+        <div class="suggestion-title">Base de Datos en la Nube</div>
+        <div class="suggestion-desc">
+          Actualmente los datos se guardan en el navegador (localStorage), lo que significa que si
+          abrís el programa en otra computadora los datos no aparecen. Con <strong>Firebase Firestore</strong>
+          (gratuito) los datos estarían en la nube y accesibles desde cualquier dispositivo.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">📱</div>
+      <div>
+        <div class="suggestion-title">Versión Móvil (PWA)</div>
+        <div class="suggestion-desc">
+          Convertir la app en una PWA (Progressive Web App) para que pueda instalarse como
+          aplicación en el celular, funcionar sin internet y enviar notificaciones.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">✉️</div>
+      <div>
+        <div class="suggestion-title">Correo Electrónico y Notificaciones</div>
+        <div class="suggestion-desc">
+          Agregar el campo de email y conectar con EmailJS para enviar avisos automáticos
+          a los alumnos cuando hay cambios en sus datos o novedades del sistema.
+        </div>
+      </div>
+    </div>
+
+    <div class="suggestion-item">
+      <div class="suggestion-icon">🔍</div>
+      <div>
+        <div class="suggestion-title">Búsqueda con Inteligencia Artificial</div>
+        <div class="suggestion-desc">
+          Integrar búsqueda semántica usando la API de OpenAI o Google para que los filtros
+          entiendan lenguaje natural: por ejemplo escribir "alumnos que les gusta programar en
+          escuelas de Capital Federal" y que el sistema lo interprete automáticamente.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- fin page-registro -->
+
+
+<!-- =======================================================
+     PÁGINA 2: CONSULTAS Y FILTROS
+     Permite buscar alumnos con hasta 6 filtros combinados.
+     ======================================================= -->
+<div class="page" id="page-consultas">
+
+  <div class="page-header">
+    <h1 class="page-title">Consultas de Alumnos</h1>
+    <p class="page-subtitle">Usá los filtros para encontrar alumnos según distintos criterios.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔎 Filtros de Búsqueda</div>
+    <p style="color:var(--muted); font-size:0.85rem; margin-bottom:1rem;">
+      Podés combinar hasta 6 filtros a la vez. Dejá un campo vacío si no querés filtrar por esa categoría.
+    </p>
+
+    <div class="filters-grid">
+
+      <!-- FILTRO 1: Búsqueda por texto libre (apellido o nombre) -->
+      <div class="form-group">
+        <label>🔤 Filtro 1 — Apellido o Nombre</label>
+        <input type="text" id="f-nombre" placeholder="Escribí parte del nombre..." />
+      </div>
+
+      <!-- FILTRO 2: Escuela específica -->
+      <div class="form-group">
+        <label>🏫 Filtro 2 — Escuela</label>
+        <input type="text" id="f-escuela" placeholder="Nombre de la escuela..." />
+      </div>
+
+      <!-- FILTRO 3: Especialidad (selector) -->
+      <div class="form-group">
+        <label>📚 Filtro 3 — Especialidad</label>
+        <select id="f-especialidad">
+          <option value="">Todas las especialidades</option>
+          <option value="Informática">Informática</option>
+          <option value="Electrónica">Electrónica</option>
+          <option value="Electricidad">Electricidad</option>
+          <option value="Mecánica">Mecánica</option>
+          <option value="Construcciones">Construcciones</option>
+          <option value="Administración">Administración</option>
+          <option value="Contabilidad">Contabilidad</option>
+          <option value="Química">Química Industrial</option>
+          <option value="Maestro Mayor Obras">Maestro Mayor de Obras</option>
+          <option value="Diseño">Diseño Gráfico</option>
+          <option value="Agrotécnica">Agrotécnica</option>
+          <option value="Turismo">Turismo</option>
+          <option value="Salud">Salud y Enfermería</option>
+          <option value="Comunicación">Comunicación</option>
+          <option value="Arte">Arte y Expresión</option>
+        </select>
+      </div>
+
+      <!-- FILTRO 4: Interés específico -->
+      <div class="form-group">
+        <label>💡 Filtro 4 — Interés</label>
+        <select id="f-interes">
+          <option value="">Todos los intereses</option>
+          <!-- Se llena dinámicamente desde JavaScript -->
+        </select>
+      </div>
+
+      <!-- FILTRO 5: Rango de edad -->
+      <div class="form-group">
+        <label>🎂 Filtro 5 — Edad mínima</label>
+        <input type="number" id="f-edad-min" placeholder="Ej: 14" min="1" max="99" />
+      </div>
+
+      <div class="form-group">
+        <label>🎂 Filtro 5 — Edad máxima</label>
+        <input type="number" id="f-edad-max" placeholder="Ej: 18" min="1" max="99" />
+      </div>
+
+      <!-- FILTRO 6: Calle (domicilio) -->
+      <div class="form-group" style="grid-column: span 3;">
+        <label>📍 Filtro 6 — Calle del domicilio</label>
+        <input type="text" id="f-calle" placeholder="Parte del nombre de la calle..." />
+      </div>
+
+    </div><!-- fin filters-grid -->
+
+    <!-- Botones para ejecutar la búsqueda o limpiar filtros -->
+    <div class="filter-actions">
+      <button class="btn btn-primary" onclick="buscarAlumnos()">
+        🔍 Buscar
+      </button>
+      <button class="btn btn-secondary" onclick="limpiarFiltros()">
+        ✖ Limpiar Filtros
+      </button>
+      <button class="btn btn-success" onclick="exportarCSV()">
+        📥 Exportar CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Información sobre los resultados + tabla -->
+  <div id="resultados-info" class="results-info" style="display:none;">
+    <p class="results-count">Se encontraron <strong id="resultados-count">0</strong> alumnos</p>
+  </div>
+
+  <!-- Contenedor de la tabla de resultados -->
+  <div id="tabla-resultados"></div>
+
+</div><!-- fin page-consultas -->
+
+
+<!-- =====================================================
+     MODAL DE DETALLE DEL ALUMNO
+     Ventana que se abre al hacer clic en "Ver" en la tabla.
+     ===================================================== -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-titulo">Detalle del Alumno</div>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toast de notificaciones -->
+<div id="toast"></div>
+
+
+<!-- =====================================================
+     JAVASCRIPT - LÓGICA DE LA APLICACIÓN
+     
+     ESTRUCTURA DEL CÓDIGO:
+     1. CONSTANTES Y DATOS FIJOS (lista de intereses)
+     2. BASE DE DATOS (funciones para leer/escribir localStorage)
+     3. INICIALIZACIÓN (lo que corre al abrir la página)
+     4. NAVEGACIÓN (cambiar entre páginas)
+     5. FORMULARIO (guardar, limpiar, validar)
+     6. CONSULTAS Y FILTROS
+     7. TABLA DE RESULTADOS
+     8. MODAL DE DETALLE
+     9. UTILIDADES (toast, fechas, etc.)
+     ===================================================== -->
+<script>
+
+/* =======================================================
+   1. CONSTANTES Y DATOS FIJOS
+   
+   Estos datos no cambian nunca. Son las opciones 
+   predefinidas del sistema.
+   ======================================================= */
+
+/**
+ * Lista de 20 intereses posibles para los alumnos.
+ * Cada interés tiene un emoji y un nombre.
+ */
+const INTERESES_DISPONIBLES = [
+  { emoji: '💻', nombre: 'Informática' },
+  { emoji: '⚡', nombre: 'Electrónica' },
+  { emoji: '💰', nombre: 'Economía' },
+  { emoji: '🏛️', nombre: 'Arquitectura' },
+  { emoji: '🔬', nombre: 'Ciencias Naturales' },
+  { emoji: '📐', nombre: 'Matemáticas' },
+  { emoji: '🎨', nombre: 'Arte y Diseño' },
+  { emoji: '🎵', nombre: 'Música' },
+  { emoji: '⚙️', nombre: 'Mecánica' },
+  { emoji: '🧬', nombre: 'Biotecnología' },
+  { emoji: '📱', nombre: 'Tecnología Móvil' },
+  { emoji: '🏥', nombre: 'Medicina y Salud' },
+  { emoji: '✈️', nombre: 'Aviación' },
+  { emoji: '🌱', nombre: 'Medio Ambiente' },
+  { emoji: '📷', nombre: 'Fotografía y Video' },
+  { emoji: '🏗️', nombre: 'Ingeniería Civil' },
+  { emoji: '📊', nombre: 'Marketing y Publicidad' },
+  { emoji: '🤖', nombre: 'Robótica e IA' },
+  { emoji: '🌍', nombre: 'Idiomas y Culturas' },
+  { emoji: '⚽', nombre: 'Deporte y Educación Física' }
+];
+
+/**
+ * Nombre de la "tabla" en localStorage.
+ * localStorage es como una mini base de datos del navegador.
+ */
+const STORAGE_KEY = 'alumnos_db';
+
+
+/* =======================================================
+   2. BASE DE DATOS (localStorage)
+   
+   localStorage guarda datos en el navegador del usuario.
+   Es como un archivo de texto en el que guardamos JSON.
+   
+   VENTAJA: No necesita internet ni servidor.
+   DESVENTAJA: Los datos son solo de esa computadora.
+   ======================================================= */
+
+/**
+ * Obtiene todos los alumnos de la base de datos.
+ * @returns {Array} - Array de objetos alumno
+ */
+function obtenerTodosLosAlumnos() {
+  // Intentamos leer los datos guardados
+  const datos = localStorage.getItem(STORAGE_KEY);
+  
+  // Si no hay nada guardado todavía, devolvemos un array vacío
+  if (!datos) return [];
+  
+  // Convertimos el texto JSON a un array de objetos JavaScript
+  return JSON.parse(datos);
+}
+
+/**
+ * Guarda el array completo de alumnos en localStorage.
+ * @param {Array} alumnos - Array de objetos alumno
+ */
+function guardarEnBaseDeDatos(alumnos) {
+  // JSON.stringify convierte el array JS a texto para guardarlo
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(alumnos));
+}
+
+/**
+ * Agrega un alumno nuevo a la base de datos.
+ * Le asignamos un ID único basado en la fecha/hora actual.
+ * @param {Object} alumno - Objeto con los datos del alumno
+ */
+function agregarAlumno(alumno) {
+  const alumnos = obtenerTodosLosAlumnos();
+  
+  // Date.now() devuelve un número único (milisegundos desde 1970)
+  alumno.id = Date.now();
+  alumno.fechaRegistro = new Date().toLocaleDateString('es-AR');
+  
+  alumnos.push(alumno); // Agregamos al final del array
+  guardarEnBaseDeDatos(alumnos);
+}
+
+/**
+ * Elimina un alumno por su ID.
+ * @param {number} id - ID del alumno a eliminar
+ */
+function eliminarAlumno(id) {
+  const alumnos = obtenerTodosLosAlumnos();
+  
+  // filter crea un nuevo array sin el alumno que tiene ese ID
+  const actualizados = alumnos.filter(a => a.id !== id);
+  
+  guardarEnBaseDeDatos(actualizados);
+}
+
+/**
+ * Calcula la edad de una persona a partir de su fecha de nacimiento.
+ * @param {string} fechaNac - Fecha en formato YYYY-MM-DD
+ * @returns {number} - Edad en años
+ */
+function calcularEdad(fechaNac) {
+  const hoy = new Date();
+  const nacimiento = new Date(fechaNac);
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  
+  // Verificamos si ya cumplió años este año
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--; // Todavía no cumplió este año
+  }
+  
+  return edad;
+}
+
+/**
+ * Formatea una fecha de YYYY-MM-DD a DD/MM/YYYY (formato argentino).
+ * @param {string} fecha - Fecha en formato YYYY-MM-DD
+ * @returns {string} - Fecha en formato DD/MM/YYYY
+ */
+function formatearFecha(fecha) {
+  if (!fecha) return '—';
+  const [year, month, day] = fecha.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+
+/* =======================================================
+   3. INICIALIZACIÓN
+   
+   Todo lo que necesitamos preparar cuando se abre la página.
+   ======================================================= */
+
+/**
+ * Función principal de inicialización.
+ * Se ejecuta automáticamente al cargar la página (ver al final).
+ */
+function inicializar() {
+  // Generar los checkboxes de intereses en el formulario
+  generarIntereses();
+  
+  // Llenar el selector de intereses en los filtros de consulta
+  llenarFiltroIntereses();
+  
+  // Limitar la fecha de nacimiento máxima a hoy
+  document.getElementById('fechaNac').max = new Date().toISOString().split('T')[0];
+  
+  // Actualizar las estadísticas del dashboard
+  actualizarEstadisticas();
+  
+  // Mostrar los últimos alumnos registrados
+  mostrarUltimosAlumnos();
+}
+
+/**
+ * Genera dinámicamente los checkboxes de intereses en el formulario.
+ * Lee el array INTERESES_DISPONIBLES y crea el HTML correspondiente.
+ */
+function generarIntereses() {
+  const contenedor = document.getElementById('intereses-grid');
+  
+  // Mapeamos cada interés a un elemento HTML y los unimos
+  contenedor.innerHTML = INTERESES_DISPONIBLES.map(interes => `
+    <label class="interes-item">
+      <input type="checkbox" name="interes" value="${interes.nombre}" />
+      ${interes.emoji} ${interes.nombre}
+    </label>
+  `).join('');
+}
+
+/**
+ * Rellena el selector de intereses en la página de Consultas.
+ */
+function llenarFiltroIntereses() {
+  const select = document.getElementById('f-interes');
+  INTERESES_DISPONIBLES.forEach(interes => {
+    const option = document.createElement('option');
+    option.value = interes.nombre;
+    option.textContent = `${interes.emoji} ${interes.nombre}`;
+    select.appendChild(option);
+  });
+}
+
+/**
+ * Actualiza los 4 números del dashboard de estadísticas.
+ */
+function actualizarEstadisticas() {
+  const alumnos = obtenerTodosLosAlumnos();
+  
+  // Total de alumnos
+  document.getElementById('stat-total').textContent = alumnos.length;
+  
+  // Escuelas únicas: usamos Set para eliminar duplicados
+  const escuelas = new Set(alumnos.map(a => a.escuela).filter(Boolean));
+  document.getElementById('stat-escuelas').textContent = escuelas.size;
+  
+  // Especialidades únicas
+  const especialidades = new Set(alumnos.map(a => a.especialidad).filter(Boolean));
+  document.getElementById('stat-especialidades').textContent = especialidades.size;
+  
+  // Total de intereses únicos registrados en toda la base de datos
+  const todosIntereses = new Set();
+  alumnos.forEach(a => {
+    if (a.intereses) a.intereses.forEach(i => todosIntereses.add(i));
+  });
+  document.getElementById('stat-intereses').textContent = todosIntereses.size;
+}
+
+/**
+ * Muestra los últimos 5 alumnos en la tabla de la página principal.
+ */
+function mostrarUltimosAlumnos() {
+  const alumnos = obtenerTodosLosAlumnos();
+  const contenedor = document.getElementById('ultimos-alumnos');
+  
+  if (alumnos.length === 0) {
+    contenedor.innerHTML = `
+      <div class="empty-state">
+        <p>Aún no hay alumnos registrados. ¡Usá el formulario de arriba para agregar el primero!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Tomamos los últimos 5 (los más recientes están al final del array)
+  const ultimos = [...alumnos].reverse().slice(0, 5);
+  
+  contenedor.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Apellido y Nombre</th>
+            <th>Edad</th>
+            <th>Escuela</th>
+            <th>Especialidad</th>
+            <th>Registrado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ultimos.map(a => `
+            <tr>
+              <td><strong>${a.apellido}, ${a.nombre}</strong></td>
+              <td>${calcularEdad(a.fechaNac)} años</td>
+              <td>${a.escuela}</td>
+              <td>${a.especialidad}</td>
+              <td>${a.fechaRegistro}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="verDetalle(${a.id})">👁️ Ver</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmarEliminar(${a.id})">🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${alumnos.length > 5 ? `
+      <p style="color:var(--muted); font-size:0.85rem; margin-top:0.75rem; text-align:right;">
+        Mostrando los últimos 5 de ${alumnos.length} alumnos.
+        <button class="btn btn-secondary btn-sm" onclick="showPage('consultas')">Ver todos</button>
+      </p>
+    ` : ''}
+  `;
+}
+
+
+/* =======================================================
+   4. NAVEGACIÓN
+   ======================================================= */
+
+/**
+ * Cambia la página visible entre "registro" y "consultas".
+ * @param {string} nombre - 'registro' o 'consultas'
+ */
+function showPage(nombre) {
+  // Ocultamos todas las páginas
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  
+  // Mostramos la página pedida
+  document.getElementById(`page-${nombre}`).classList.add('active');
+  
+  // Marcamos la pestaña correspondiente como activa
+  const tabs = document.querySelectorAll('.nav-tab');
+  if (nombre === 'registro') tabs[0].classList.add('active');
+  if (nombre === 'consultas') {
+    tabs[1].classList.add('active');
+    // Cuando se abre consultas, hacemos una búsqueda inicial
+    buscarAlumnos();
+  }
+}
+
+
+/* =======================================================
+   5. FORMULARIO - GUARDAR Y VALIDAR
+   ======================================================= */
+
+/**
+ * Lee los datos del formulario y los guarda en la base de datos.
+ * También valida que los campos obligatorios estén completos.
+ */
+function guardarAlumno() {
+  // === RECOLECCIÓN DE DATOS ===
+  
+  const apellido    = document.getElementById('apellido').value.trim();
+  const nombre      = document.getElementById('nombre').value.trim();
+  const fechaNac    = document.getElementById('fechaNac').value;
+  const calle       = document.getElementById('calle').value.trim();
+  const numero      = document.getElementById('numero').value.trim();
+  const telCelular  = document.getElementById('telCelular').value.trim();
+  const escuela     = document.getElementById('escuela').value.trim();
+  const especialidad = document.getElementById('especialidad').value;
+  
+  // Obtenemos los intereses marcados como un array de strings
+  const checkboxes = document.querySelectorAll('#intereses-grid input[type="checkbox"]:checked');
+  const intereses = Array.from(checkboxes).map(cb => cb.value);
+  
+  // === VALIDACIÓN ===
+  // Verificamos que todos los campos obligatorios tengan valor
+  
+  const camposRequeridos = [
+    { valor: apellido,     campo: 'apellido',     nombre: 'Apellido' },
+    { valor: nombre,       campo: 'nombre',       nombre: 'Nombre' },
+    { valor: fechaNac,     campo: 'fechaNac',     nombre: 'Fecha de Nacimiento' },
+    { valor: calle,        campo: 'calle',        nombre: 'Calle' },
+    { valor: numero,       campo: 'numero',       nombre: 'Número' },
+    { valor: escuela,      campo: 'escuela',      nombre: 'Escuela' },
+    { valor: especialidad, campo: 'especialidad', nombre: 'Especialidad' },
+  ];
+  
+  // Buscamos el primer campo vacío
+  const faltante = camposRequeridos.find(c => !c.valor);
+  
+  if (faltante) {
+    mostrarToast(`⚠️ Por favor completá el campo: ${faltante.nombre}`, 'error');
+    document.getElementById(faltante.campo).focus(); // Llevamos el cursor al campo
+    return; // Detenemos la ejecución si hay error
+  }
+  
+  // === GUARDADO ===
+  
+  const alumno = {
+    apellido,
+    nombre,
+    fechaNac,
+    calle,
+    numero: parseInt(numero),
+    telCelular,
+    escuela,
+    especialidad,
+    intereses
+  };
+  
+  agregarAlumno(alumno); // Guardamos en localStorage
+  
+  mostrarToast(`✅ Alumno ${apellido}, ${nombre} registrado correctamente`, 'success');
+  
+  limpiarFormulario();          // Limpiamos el formulario
+  actualizarEstadisticas();     // Actualizamos contadores
+  mostrarUltimosAlumnos();      // Refrescamos la tabla
+}
+
+/**
+ * Limpia todos los campos del formulario para empezar de nuevo.
+ */
+function limpiarFormulario() {
+  // Limpiamos cada campo de texto/número/fecha
+  ['apellido', 'nombre', 'fechaNac', 'calle', 'numero', 'telCelular', 'escuela']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  
+  // Reseteamos el selector de especialidad
+  document.getElementById('especialidad').selectedIndex = 0;
+  
+  // Desmarcamos todos los checkboxes de intereses
+  document.querySelectorAll('#intereses-grid input[type="checkbox"]')
+    .forEach(cb => { cb.checked = false; });
+}
+
+
+/* =======================================================
+   6. CONSULTAS Y FILTROS
+   
+   Aplica hasta 6 filtros simultáneos sobre la base de datos.
+   ======================================================= */
+
+/**
+ * Busca alumnos aplicando todos los filtros activos.
+ * Un filtro está "activo" cuando su campo no está vacío.
+ */
+function buscarAlumnos() {
+  const alumnos = obtenerTodosLosAlumnos();
+  
+  // === LEER VALORES DE FILTROS ===
+  
+  const fNombre      = document.getElementById('f-nombre').value.trim().toLowerCase();
+  const fEscuela     = document.getElementById('f-escuela').value.trim().toLowerCase();
+  const fEspecialidad = document.getElementById('f-especialidad').value;
+  const fInteres     = document.getElementById('f-interes').value;
+  const fEdadMin     = parseInt(document.getElementById('f-edad-min').value) || 0;
+  const fEdadMax     = parseInt(document.getElementById('f-edad-max').value) || 999;
+  const fCalle       = document.getElementById('f-calle').value.trim().toLowerCase();
+  
+  // === APLICAR FILTROS ===
+  // filter() recorre el array y mantiene solo los que pasan la condición.
+  // Cada línea es un filtro. Si el campo está vacío, la condición siempre es true (no filtra).
+  
+  const resultados = alumnos.filter(a => {
+    
+    // FILTRO 1: Apellido o nombre (búsqueda parcial, sin importar mayúsculas)
+    const matchNombre = !fNombre || 
+      a.apellido.toLowerCase().includes(fNombre) || 
+      a.nombre.toLowerCase().includes(fNombre);
+    
+    // FILTRO 2: Escuela (búsqueda parcial)
+    const matchEscuela = !fEscuela || 
+      a.escuela.toLowerCase().includes(fEscuela);
+    
+    // FILTRO 3: Especialidad exacta (del selector)
+    const matchEspecialidad = !fEspecialidad || 
+      a.especialidad === fEspecialidad;
+    
+    // FILTRO 4: Interés (el alumno debe tener ese interés en su lista)
+    const matchInteres = !fInteres || 
+      (a.intereses && a.intereses.includes(fInteres));
+    
+    // FILTRO 5: Rango de edad
+    const edad = calcularEdad(a.fechaNac);
+    const matchEdad = edad >= fEdadMin && edad <= fEdadMax;
+    
+    // FILTRO 6: Calle del domicilio (búsqueda parcial)
+    const matchCalle = !fCalle || 
+      a.calle.toLowerCase().includes(fCalle);
+    
+    // El alumno solo aparece si TODOS los filtros activos lo aceptan
+    return matchNombre && matchEscuela && matchEspecialidad && 
+           matchInteres && matchEdad && matchCalle;
+  });
+  
+  // Mostramos los resultados
+  mostrarResultados(resultados);
+}
+
+/**
+ * Limpia todos los campos de filtro y muestra todos los alumnos.
+ */
+function limpiarFiltros() {
+  document.getElementById('f-nombre').value = '';
+  document.getElementById('f-escuela').value = '';
+  document.getElementById('f-especialidad').selectedIndex = 0;
+  document.getElementById('f-interes').selectedIndex = 0;
+  document.getElementById('f-edad-min').value = '';
+  document.getElementById('f-edad-max').value = '';
+  document.getElementById('f-calle').value = '';
+  
+  buscarAlumnos(); // Actualizamos la tabla
+}
+
+/**
+ * Exporta los resultados actuales a un archivo CSV.
+ * CSV es un formato que puede abrirse en Excel.
+ */
+function exportarCSV() {
+  const alumnos = obtenerTodosLosAlumnos();
+  
+  if (alumnos.length === 0) {
+    mostrarToast('No hay datos para exportar', 'error');
+    return;
+  }
+  
+  // Encabezados de las columnas
+  const encabezados = ['ID','Apellido','Nombre','Fecha Nac','Edad','Calle','Número','Celular','Escuela','Especialidad','Intereses','Fecha Registro'];
+  
+  // Convertimos cada alumno a una fila CSV
+  const filas = alumnos.map(a => [
+    a.id,
+    a.apellido,
+    a.nombre,
+    formatearFecha(a.fechaNac),
+    calcularEdad(a.fechaNac),
+    a.calle,
+    a.numero,
+    a.telCelular || '',
+    a.escuela,
+    a.especialidad,
+    (a.intereses || []).join(' | '), // Intereses separados por |
+    a.fechaRegistro
+  ].map(v => `"${v}"`).join(',')); // Cada valor entre comillas
+  
+  // Unimos todo en un string con saltos de línea
+  const csv = '\uFEFF' + [encabezados.join(','), ...filas].join('\n'); // \uFEFF = BOM para Excel en español
+  
+  // Creamos un archivo temporal y lo descargamos
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href     = url;
+  link.download = `alumnos_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  mostrarToast('✅ Archivo CSV descargado correctamente', 'success');
+}
+
+
+/* =======================================================
+   7. TABLA DE RESULTADOS
+   ======================================================= */
+
+/**
+ * Renderiza la tabla con los alumnos encontrados.
+ * @param {Array} resultados - Array filtrado de alumnos
+ */
+function mostrarResultados(resultados) {
+  const info = document.getElementById('resultados-info');
+  const contenedor = document.getElementById('tabla-resultados');
+  
+  // Mostramos el conteo
+  info.style.display = 'flex';
+  document.getElementById('resultados-count').textContent = resultados.length;
+  
+  // Si no hay resultados, mostramos un mensaje
+  if (resultados.length === 0) {
+    contenedor.innerHTML = `
+      <div class="empty-state" style="margin-top:1rem;">
+        <p>😕 No se encontraron alumnos con los filtros aplicados.</p>
+        <p style="margin-top:0.5rem; font-size:0.85rem;">Intentá con menos filtros o valores más amplios.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Generamos la tabla HTML
+  contenedor.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Apellido y Nombre</th>
+            <th>Edad</th>
+            <th>Domicilio</th>
+            <th>Celular</th>
+            <th>Escuela</th>
+            <th>Especialidad</th>
+            <th>Intereses</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${resultados.map(a => `
+            <tr>
+              <td><strong>${a.apellido}, ${a.nombre}</strong></td>
+              <td>${calcularEdad(a.fechaNac)} años</td>
+              <td>${a.calle} ${a.numero}</td>
+              <td>${a.telCelular || '—'}</td>
+              <td>${a.escuela}</td>
+              <td>${a.especialidad}</td>
+              <td>
+                ${(a.intereses || []).slice(0,3).map(i =>
+                  `<span class="badge">${i}</span>`
+                ).join('')}
+                ${(a.intereses || []).length > 3 
+                  ? `<span class="badge">+${a.intereses.length - 3}</span>` 
+                  : ''
+                }
+              </td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="verDetalle(${a.id})">👁️ Ver</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmarEliminar(${a.id})">🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+
+/* =======================================================
+   8. MODAL DE DETALLE
+   ======================================================= */
+
+/**
+ * Abre el modal mostrando todos los datos de un alumno.
+ * @param {number} id - ID del alumno a mostrar
+ */
+function verDetalle(id) {
+  const alumnos = obtenerTodosLosAlumnos();
+  const alumno = alumnos.find(a => a.id === id); // Buscamos por ID
+  
+  if (!alumno) return;
+  
+  const edad = calcularEdad(alumno.fechaNac);
+  
+  // Generamos el contenido del modal con todos los datos
+  document.getElementById('modal-titulo').textContent = 
+    `${alumno.apellido}, ${alumno.nombre}`;
+  
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-row">
+      <div class="detail-key">Apellido</div>
+      <div class="detail-val">${alumno.apellido}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Nombre</div>
+      <div class="detail-val">${alumno.nombre}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Fecha de Nac.</div>
+      <div class="detail-val">${formatearFecha(alumno.fechaNac)} (${edad} años)</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Domicilio</div>
+      <div class="detail-val">${alumno.calle} N° ${alumno.numero}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Celular</div>
+      <div class="detail-val">${alumno.telCelular || '—'}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Escuela</div>
+      <div class="detail-val">${alumno.escuela}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Especialidad</div>
+      <div class="detail-val">${alumno.especialidad}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Intereses</div>
+      <div class="detail-val">
+        ${(alumno.intereses || []).length > 0
+          ? alumno.intereses.map(i => `<span class="badge">${i}</span>`).join('')
+          : '—'
+        }
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">Registrado el</div>
+      <div class="detail-val">${alumno.fechaRegistro}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-key">ID interno</div>
+      <div class="detail-val" style="color:var(--muted); font-size:0.8rem;">${alumno.id}</div>
+    </div>
+    
+    <div style="margin-top:1.5rem; display:flex; gap:0.75rem;">
+      <button class="btn btn-danger" onclick="confirmarEliminar(${alumno.id}); cerrarModal()">
+        🗑️ Eliminar Alumno
+      </button>
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  `;
+  
+  // Abrimos el modal
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+/**
+ * Cierra el modal.
+ * @param {Event} [evento] - Si se pasó un evento, verificamos que el clic fue en el overlay
+ */
+function cerrarModal(evento) {
+  // Si se hizo clic en el overlay (fondo) y no en el modal mismo, cerramos
+  if (evento && evento.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+/**
+ * Pide confirmación antes de eliminar un alumno.
+ * @param {number} id - ID del alumno a eliminar
+ */
+function confirmarEliminar(id) {
+  const alumnos = obtenerTodosLosAlumnos();
+  const alumno  = alumnos.find(a => a.id === id);
+  
+  if (!alumno) return;
+  
+  // confirm() muestra un diálogo nativo del navegador
+  if (confirm(`¿Confirmás que querés eliminar al alumno ${alumno.apellido}, ${alumno.nombre}?\n\nEsta acción no se puede deshacer.`)) {
+    eliminarAlumno(id);
+    mostrarToast(`🗑️ Alumno ${alumno.apellido} eliminado`, 'success');
+    actualizarEstadisticas();
+    mostrarUltimosAlumnos();
+    
+    // Si estamos en la página de consultas, actualizamos la tabla
+    if (document.getElementById('page-consultas').classList.contains('active')) {
+      buscarAlumnos();
+    }
+  }
+}
+
+
+/* =======================================================
+   9. UTILIDADES
+   ======================================================= */
+
+/**
+ * Muestra una notificación flotante (toast) en la esquina inferior derecha.
+ * @param {string} mensaje  - Texto a mostrar
+ * @param {string} tipo     - 'success' o 'error'
+ */
+function mostrarToast(mensaje, tipo) {
+  const toast = document.getElementById('toast');
+  toast.textContent = mensaje;
+  toast.className   = `show ${tipo}`; // Aplicamos clase de color y animación
+  
+  // Después de 3 segundos, lo ocultamos
+  setTimeout(() => {
+    toast.className = '';
+  }, 3000);
+}
+
+// =====================================================
+// ARRANQUE DE LA APLICACIÓN
+// window.onload se ejecuta cuando la página terminó de cargar
+// =====================================================
+window.onload = inicializar;
+
+</script>
+</body>
+</html>
