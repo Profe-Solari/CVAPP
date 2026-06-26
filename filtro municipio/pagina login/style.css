@@ -1,0 +1,56 @@
+header{
+    background-color:#c8102e;
+    height:55px;
+    display:flex;
+    align-items:center;
+    padding:0 30px;
+}
+
+body{
+    margin: 0;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:white;
+    font-family:Arial, sans-serif;
+    font-weight:bold;
+}
+
+.logo img{
+    height:22px;
+}
+
+.login-card{
+    width: 600px;
+    background: white;
+    margin: 50px auto;
+    padding: 10px;
+    border: 10px solid #d8d8d8;
+    border-top: 5px solid #d32f2f;
+
+
+}
+
+.login-card{
+    text-align: center;
+}
+
+footer{
+    background-color:#c8102e;
+    color:white;
+
+    height:55px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    position:fixed;
+    bottom:0;
+    left:0;
+
+    width:100%;
+}
