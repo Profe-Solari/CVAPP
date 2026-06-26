@@ -41,7 +41,11 @@ footer{
     width:100%;
 }
 
-
+.stats{
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
 .recuadro_1{
     width: 210px;
     background: white;
@@ -49,6 +53,7 @@ footer{
     padding: 10px;
     border: 1px solid #d8d8d8;
     border-top: 5px solid #d32f2f;
+    gap: 20px;
 
     display:flex;
     justify-content:center;
@@ -62,6 +67,7 @@ footer{
     padding: 10px;
     border: 1px solid #d8d8d8;
     border-top: 5px solid #d32f2f;
+    gap: 20px;
 
     display:flex;
     justify-content:center;
@@ -75,6 +81,7 @@ footer{
     padding: 10px;
     border: 1px solid #d8d8d8;
     border-top: 5px solid #d32f2f;
+    gap: 20px;
 
     display:flex;
     justify-content:center;
@@ -88,6 +95,196 @@ footer{
     padding: 10px;
     border: 1px solid #d8d8d8;
     border-top: 5px solid #d32f2f;
+    gap: 20px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+
+.tabla_datos{
+    width: 90%;
+    background: white;
+    margin: 50px auto;
+    padding: 0px;
+    border: 10px solid #d8d8d8;
+    border-top: 5px solid #d32f2f;
+
+    display: flex;
+    justify-content: center;
+    gap: 00px;
+
+
+}
+
+.nombre{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.dni{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.escuela{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+
+.edad{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.telefono{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.especialidad{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+
+.tabla_alumnos{
+    width: 90%;
+    background: white;
+    margin: -60px auto;
+    padding: 0px;
+    border: 10px solid #d8d8d8;
+
+    display: flex;
+    justify-content: center;
+    gap: 00px;
+
+
+}
+
+.nombre_a{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.dni_a{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.escuela_a{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+
+.edad_a{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.telefono_a{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.especialidad_a{
+    flex: 1;
+    background: white;
+    margin: 0px 0px;
+    padding: 00px;
+    border: 1px solid #d8d8d8;
+    gap: 00px;
 
     display:flex;
     justify-content:center;
